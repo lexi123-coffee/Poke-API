@@ -1,11 +1,370 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=80');
+const data = await response.json();
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const pokemonDetailedList = await Promise.all(
+  data.results.map(async (pokemon) => {
+    const res = await fetch(pokemon.url);
+    const info = await res.json();
+    return {
+      name: pokemon.name,
+      type: info.types[0].type.name,
+      image: info.sprites.front_default
+    };
+  })
+);
 ---
+<header class="navbar">
+  <h1>Pokemon List (By Alexis Ceja)</h1>
+</header>
+<div class="search-container">
 
-<Layout>
-	<Welcome />
-</Layout>
+</div>
+<main>
+<div class="search-area">
+  <div class="search-box">
+    <span class="search-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+    </span>
+    <input
+      type="text"
+      id="pokemon-search"
+      placeholder="Buscar Pokemon por nombre o tipo..."
+    />
+  </div>
+</div>
+  <div class="pokemon-container">
+   {
+      pokemonDetailedList.map((pokemon) => (
+        <article class="pokemon-card">
+          <button class="fav-btn" data-name={pokemon.name} aria-label="Añadir a favoritos">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="heart-icon">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+           </svg>
+          </button>
+
+          <div class="image-bg">
+            <img src={pokemon.image} alt={pokemon.name} />
+          </div>
+          <h3>{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h3>
+          <p>Type: {pokemon.type.charAt(0).toUpperCase() + pokemon.type.slice(1)}</p>
+       </article>
+    ))}
+  </div>
+
+  <div id="pokemon-modal" class="modal-hidden">
+  <div class="modal-content">
+    <button id="close-modal">&times;</button>
+    <div id="modal-body">
+      </div>
+  </div>
+</div>
+</main>
+
+<style>
+
+  .navbar {
+    background-color: #EF5350;
+    padding: 15px 0;
+    width: 100%;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  h1 {
+    text-align: center;
+    margin: 0;
+    font-family: 'Arial Black', sans-serif;
+    color: #ffcb05;
+    text-shadow: 3px 3px 0px #2a3990;
+    font-size: 3rem;
+  }
+
+
+  .pokemon-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+
+  .pokemon-card {
+    position: relative;
+    background-color: #04223c;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    border: 1px solid #444;
+  }
+
+  .fav-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.3);
+    z-index: 10;
+  }
+
+  .fav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+
+  .fav-btn.is-favorite {
+    color: #ff4757;
+    filter: drop-shadow(0 0 5px rgba(255, 71, 87, 0.5));
+  }
+
+  .heart-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .fav-btn.is-favorite .heart-icon {
+    transform: scale(1.2);
+  }
+
+  .pokemon-card:hover {
+    transform: translateY(-10px);
+  }
+
+  .image-bg {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  h3 {
+    color: #ff1000;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin: 10px 0;
+  }
+
+  p {
+    font-size: 1.1rem;
+    color: #ffffff;
+    opacity: 0.9;
+  }
+
+
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    background-color: #1b262c;
+    font-family: system-ui, sans-serif;
+  }
+
+  .search-area {
+    max-width: 500px;
+    margin: 0 auto 30px;
+    padding: 0 20px;
+  }
+
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 15px;
+    width: 20px;
+    height: 20px;
+    color: #94a3b8;
+  }
+
+  .search-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  #pokemon-search {
+    width: 100%;
+    padding: 12px 12px 12px 45px;
+    background-color: #04223c;
+    border: 1px solid #444;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  #pokemon-search:focus {
+    border-color: #ffcb05;
+    box-shadow: 0 0 8px rgba(255, 203, 5, 0.2);
+  }
+
+
+  #pokemon-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+  }
+
+  #pokemon-modal.is-visible {
+    display: flex;
+  }
+
+  .modal-content {
+    background: #04223c;
+    padding: 30px;
+    border-radius: 20px;
+    position: relative;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    border: 2px solid #ffcb05;
+    color: white;
+  }
+
+  #close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+
+  function initFavorites() {
+    const favButtons = document.querySelectorAll('.fav-btn');
+    const STORAGE_KEY = 'mis_pokemon_favoritos';
+
+    let favorites = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    favButtons.forEach(button => {
+      const pokemonName = button.getAttribute('data-name');
+
+      if (favorites.includes(pokemonName)) {
+        button.classList.add('is-favorite');
+      }
+
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const isFav = button.classList.toggle('is-favorite');
+
+        if (isFav) {
+          favorites.push(pokemonName);
+        } else {
+          favorites = favorites.filter(name => name !== pokemonName);
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+      });
+    });
+  }
+
+function initSearch() {
+    const searchInput = document.getElementById('pokemon-search');
+    const cards = document.querySelectorAll('.pokemon-card');
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+
+      cards.forEach(card => {
+        const name = card.querySelector('h3').innerText.toLowerCase();
+        const type = card.querySelector('p').innerText.toLowerCase();
+
+        if (name.includes(searchTerm) || type.includes(searchTerm)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  async function initModal() {
+  const cards = document.querySelectorAll('.pokemon-card');
+  const modal = document.getElementById('pokemon-modal');
+  const modalBody = document.getElementById('modal-body');
+  const closeBtn = document.getElementById('close-modal');
+
+  cards.forEach(card => {
+    card.addEventListener('click', async (e) => {
+      if (e.target.closest('.fav-btn')) return;
+
+      const name = card.querySelector('h3').innerText.toLowerCase();
+
+      modalBody.innerHTML = `<p>Cargando datos de la Pokedex...</p>`;
+      modal.classList.add('is-visible');
+
+      try {
+
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
+        const data = await response.json();
+        const statsHTML = data.stats.map(s => `
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span style="text-transform: capitalize;">${s.stat.name}:</span>
+            <span style="color: #ffcb05; font-weight: bold;">${s.base_stat}</span>
+          </div>
+        `).join('');
+
+        modalBody.innerHTML = `
+          <img src="${data.sprites.other['official-artwork'].front_default}" style="width: 180px; margin-bottom: 10px;">
+          <h2 style="color: #ffcb05; font-size: 2rem; margin-bottom: 0;">${name.toUpperCase()}</h2>
+          <p style="opacity: 0.7; margin-bottom: 20px;">ID: #${data.id}</p>
+
+          <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: left;">
+            <h4 style="margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 5px;">Estadísticas Base</h4>
+            ${statsHTML}
+          </div>
+        `;
+      } catch (error) {
+        modalBody.innerHTML = `<p>Error al cargar los datos. Inténtalo de nuevo.</p>`;
+      }
+    });
+  });
+
+  closeBtn.onclick = () => modal.classList.remove('is-visible');
+  window.onclick = (event) => {
+    if (event.target == modal) modal.classList.remove('is-visible');
+  }
+}
+
+initFavorites();
+initSearch();
+initModal();
+
+</script>
+
+
+
